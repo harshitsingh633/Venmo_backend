@@ -8,7 +8,7 @@ import "dotenv/config";
 const userRouter = Router();
 const JWT_USER_Password = process.env.JWT_SECRET;
 import bcrypt from "bcrypt";
-import { System_Prompt } from "../config/SystemPrompt.js";
+import { System_Prompt } from "../config/systemPrompt.js";
 userRouter.post("/signup", async (req, res) => {
   try {
     const requireBody = z.object({
