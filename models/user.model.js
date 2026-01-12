@@ -2,10 +2,34 @@ import mongoose from "mongoose";
 
 
 const UserSchema = new mongoose.Schema({
-    firstName : { type : String ,required : true,minLength : 3,maxLength : 50},
-    lastName : { type : String, required : true},
-    username : { type : String , required : true},
-    password : { type : String , required : true},
+    googleId: {
+        type : String,
+        unique : true,
+        sparse : true
+    },
+    firstName : {
+        type : String,
+        required : function(){
+            return !this.googleId;
+        }
+    },
+    lastName : {
+        type : String,
+        required : function () {
+            return !this.googleId;
+        }
+    },
+    username : {
+        type : String,
+        required : true,
+        unique : true
+    },
+    password : {
+        type : String,
+        required : function(){
+            return !this.googleId;
+        }
+    }
 })
 
 

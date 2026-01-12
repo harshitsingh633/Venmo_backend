@@ -1,13 +1,27 @@
 import express from "express";
+import session from "express-session";
 import cors from "cors";
 import mongoose from "mongoose";
 import "dotenv/config";
 import mainRouter from "./routes/mainRouter.js";
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin : "http://localhost:5173",
+  methods : "GET,POST,PUT,DELETE",
+  credentials: true
+}));
 app.use(express.json());
 
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: true,
+  cookie: { 
+    secure : false
+  }
+}));
 
 app.use("/api/v1", mainRouter);
 

@@ -8,6 +8,7 @@ import "dotenv/config";
 const userRouter = Router();
 const JWT_USER_Password = process.env.JWT_SECRET;
 import bcrypt from "bcrypt";
+import { System_Prompt } from "../config/SystemPrompt.js";
 userRouter.post("/signup", async (req, res) => {
   try {
     const requireBody = z.object({
@@ -19,7 +20,7 @@ userRouter.post("/signup", async (req, res) => {
 
     const parseDatawithSuccess = requireBody.safeParse(req.body);
 
-    if (!parseDatawithSuccess) {
+    if (!parseDatawithSuccess.success) {
       return res.status(400).json({
         message: "Incorrect format",
         error: parseDatawithSuccess.error,
@@ -146,7 +147,47 @@ userRouter.get("/bulk", async (req, res) => {
   });
 });
 
-export default userRouter;
+userRouter.post(
+  "/api/chat",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { message } = req.body;
 
-//40 - arpit - 4977
-//4c - jon - 7487
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      const response = await axios.post(
+        process.env.OPENAI_URL,
+        {
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: System_Prompt },
+            { role: "user", content: message },
+          ],
+          temperature: 0.4,
+          max_tokens: 200,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          timeout: 10000,
+        }
+      );
+
+      res.json({
+        reply: response.data.choices[0].message.content,
+      });
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+      res.status(500).json({
+        message: "AI service error",
+      });
+    }
+  }
+);
+
+export default userRouter;
