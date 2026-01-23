@@ -4,6 +4,7 @@ import z from "zod";
 import jwt from "jsonwebtoken";
 import { authMiddleware } from "../middlewares/AuthMiddleware.js";
 import { Account } from "../models/Account.model.js";
+import axios from "axios";
 import "dotenv/config";
 const userRouter = Router();
 const JWT_USER_Password = process.env.JWT_SECRET;
@@ -159,24 +160,27 @@ userRouter.post(
       }
 
       const response = await axios.post(
-        process.env.OPENAI_URL,
-        {
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "system", content: System_Prompt },
-            { role: "user", content: message },
-          ],
-          temperature: 0.4,
-          max_tokens: 200,
+      process.env.OPENAI_URL,
+      {
+        model: "xiaomi/mimo-v2-flash",
+        messages: [
+          { role: "system", content: System_Prompt },
+          { role: "user", content: message }
+        ],
+        temperature: 0.4,
+        max_tokens: 200
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:3000",   // REQUIRED
+          "X-Title": "Venmo AI Chatbot"               // REQUIRED
         },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          timeout: 10000,
-        }
-      );
+        timeout: 10000
+      }
+    );
+
 
       res.json({
         reply: response.data.choices[0].message.content,

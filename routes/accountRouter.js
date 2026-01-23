@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import { authMiddleware } from "../middlewares/AuthMiddleware.js";
 import { Account } from "../models/Account.model.js";
 import mongoose from "mongoose";
+import { fraudCheck } from "../middlewares/fraudCheckMiddleware.js";
 
 const accountRouter = Router();
 
@@ -15,7 +16,7 @@ accountRouter.get("/balance", authMiddleware, async (req, res) => {
   });
 });
 
-accountRouter.post("/transfer", authMiddleware, async (req, res) => {
+accountRouter.post("/transfer", authMiddleware, fraudCheck,async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   const { to, amount } = req.body;
@@ -70,4 +71,4 @@ accountRouter.post("/transfer", authMiddleware, async (req, res) => {
 });
 
 export default accountRouter;
-//1.31.34
+
