@@ -5,7 +5,7 @@ const messageSchema = new mongoose.Schema(
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: false // AI messages
+      required: false // AI messages may not have sender
     },
 
     senderType: {
@@ -14,21 +14,9 @@ const messageSchema = new mongoose.Schema(
       default: "USER"
     },
 
-    messageType: {
-      type: String,
-      enum: ["TEXT", "TRANSACTION"],
-      default: "TEXT"
-    },
-
     content: {
-      type: String
-    },
-
-    transactionSnapshot: {
-      amount: Number,
-      to: String,
-      date: Date,
-      status: String
+      type: String,
+      required: true
     }
   },
   { timestamps: true }

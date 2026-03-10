@@ -10,6 +10,8 @@ const userRouter = Router();
 const JWT_USER_Password = process.env.JWT_SECRET;
 import bcrypt from "bcrypt";
 import { System_Prompt } from "../config/systemPrompt.js";
+
+
 userRouter.post("/signup", async (req, res) => {
   try {
     const requireBody = z.object({
@@ -148,50 +150,89 @@ userRouter.get("/bulk", async (req, res) => {
   });
 });
 
-userRouter.post(
-  "/api/chat",
-  authMiddleware,
-  async (req, res) => {
-    try {
-      const { message } = req.body;
 
-      if (!message) {
-        return res.status(400).json({ message: "Message is required" });
-      }
+userRouter.post("/chatbot",async( req , res) => {
+  try{
+    const { message } = req.body;
 
-      const response = await axios.post(
-      process.env.OPENAI_URL,
-      {
-        model: "xiaomi/mimo-v2-flash",
-        messages: [
-          { role: "system", content: System_Prompt },
-          { role: "user", content: message }
-        ],
-        temperature: 0.4,
-        max_tokens: 200
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000",   // REQUIRED
-          "X-Title": "Venmo AI Chatbot"               // REQUIRED
+    if(!message){
+      return res.status(400).json({ message : "Message is required"});
+    }
+
+    console.log("User message", message.substring(0 , 30) + "..");
+
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI}`,
+        {
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: System_Prompt + "User: " + message }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 2000,
+          }
         },
-        timeout: 10000
-      }
-    );
+        {
+          headers: {
+            "Content-Type": "application/json"
+            
+          },
+          timeout: 100000
+        }
+      );
 
+      // Extract the response
+      const reply = response.data.candidates[0].content.parts[0].text;
+
+      console.log("AI Response:", reply.substring(0, 500000));
 
       res.json({
-        reply: response.data.choices[0].message.content,
+        message: reply,
       });
+
     } catch (error) {
-      console.error(error.response?.data || error.message);
+      console.error("Google AI Error:", error.response?.data || error.message);
+      
       res.status(500).json({
         message: "AI service error",
+        error: error.response?.data?.error?.message || error.message
       });
     }
   }
 );
+
+// Test endpoint for Google AI
+userRouter.get("/test-google-ai", async (req, res) => {
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI}`,
+      {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: "Say hello" }]
+          }
+        ],
+        generationConfig: {
+          maxOutputTokens: 50,
+        }
+      }
+    );
+    
+    res.json({ 
+      success: true, 
+      reply: response.data.candidates[0].content.parts[0].text 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.response?.data?.error?.message || error.message 
+    });
+  }
+});
+
 
 export default userRouter;
